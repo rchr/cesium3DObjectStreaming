@@ -8,7 +8,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
         <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
-        <title>Cesium Viewer</title>
+        <title>LoCaL's Energy Attriubute Inspector</title>
         <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
         <link rel="stylesheet" href="Build/Cesium/Widgets/widgets.css" media="screen">
         <script  src="Build/Cesium/Cesium.js"></script>
@@ -80,10 +80,10 @@ Cesium.DataSourceDisplay.defaultVisualizersCallback = function (scene, dataSourc
 };
 var viewer;
 try {
-
         viewer = new Cesium.Viewer('cesiumContainer', {
                 imageryProvider : new Cesium.OpenStreetMapImageryProvider({
-                        url : '//a.tile.openstreetmap.org/'
+                        url : 'http://tile.openstreetmap.de/tiles/osmde',
+                        credit: '©OpenStreetMap contributors'
                 }),
                 "timeline":false,
                 "animation":false,
@@ -206,6 +206,8 @@ if(isNaN(maxModels)){
 console.log("Set MaxModels to " + maxModels);
 
 loadingIndicator.style.display = 'none';
+
+// Enable picking of buildings.
 var oldMat;
 var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
 handler.setInputAction(
@@ -230,14 +232,15 @@ handler.setInputAction(
                         var splitted = cacheKey.split("/");
                         splitted = splitted[splitted.length - 1];
                         var id = splitted.split(".")[0];
-                        sendData(id);
+                        requestWFS(id);
                         oldMat = mat;
                 }
         },
         Cesium.ScreenSpaceEventType.LEFT_CLICK
 );
 
-function sendData(id) {
+/** Request attribute data from WFS. */
+function requestWFS(id) {
         var XHR = new XMLHttpRequest();
         var urlEncodedData = "";
         var urlEncodedDataPairs = [];
@@ -248,6 +251,7 @@ function sendData(id) {
                 nsResolver = document.createNSResolver(responseXML.documentElement);
 
                 var energyAttributes = getEnergyAttributesAsHTML(responseXML, nsResolver);
+                // Cesium InfoBox
                 var entity = new Cesium.Entity();
                 entity.description = {
                         getValue : function() {
@@ -265,24 +269,29 @@ function sendData(id) {
         XHR.send(wfsQuery);
 }
 
+/** Generates getFeature request with given id. */
 function buildWFSquery(id) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <wfs:GetFeature service=\"WFS\" version=\"2.0.0\" xmlns:wfs=\"http://www.opengis.net/wfs/2.0\"> <wfs:StoredQuery id=\"http://www.opengis.net/def/query/OGC-WFS/0/GetFeatureById\"> <wfs:Parameter name=\"id\">" + id + "</wfs:Parameter> </wfs:StoredQuery> </wfs:GetFeature>";
 }
 
+/** Get energy relevant attributes as html table. */
 function getEnergyAttributesAsHTML(xmlDoc, nsResolver) {
         var energyAttributes = getEnergyAttributes(xmlDoc, nsResolver);
         var table = "<table style=\"width:100%\">";
+        table += "<thead> <tr> <th>Attribute</th> <th>Value</th> </tr> </thead>";
+        table += "<tbody>";
         for (var key in energyAttributes) {
                 table += "<tr>";
                 table += "<td>" + key + "</td>";
                 table += "<td>" + energyAttributes[key] + "</td>";
                 table += "</tr>";
         }
+        table += "</tbody>";
         table += "</table>";
         return table;
 }
 
-
+/** Returns energy relevant attributes from given xmlDoc. */
 function getEnergyAttributes(xmlDoc, nsResolver) {
         var energy_rating_type  = xmlDoc.evaluate('string(/bldg:Building/gen:stringAttribute[@name=\'energy_rating_type\']/gen:value)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
         var heating_type  = xmlDoc.evaluate('string(/bldg:Building/gen:stringAttribute[@name=\'heating_type\']/gen:value)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
@@ -292,12 +301,12 @@ function getEnergyAttributes(xmlDoc, nsResolver) {
         var energy_consumption_contains_warm_water  = xmlDoc.evaluate('string(/bldg:Building/gen:stringAttribute[@name=\'energy_consumption_contains_warm_water\']/gen:value)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
 
         var attr = new Object();
-        attr['energy_rating_type'] = energy_rating_type;
-        attr['heating_type'] = heating_type;
-        attr['heating_type_enev_2014'] = heating_type_enev_2014;
-        attr['energy_source_enev_2014'] = energy_source_enev_2014;
-        attr['thermal_characteristic'] = thermal_characteristic + " kWh/(a m²)";
-        attr['energy_consumption_contains_warm_water'] = energy_consumption_contains_warm_water;
+        attr['Energy Rating Type: '] = energy_rating_type;
+        attr['Heating Type: '] = heating_type;
+        attr['Heating Type Enev2014: '] = heating_type_enev_2014;
+        attr['Energy Source Enerv2014: '] = energy_source_enev_2014;
+        attr['Thermal Characteristic: '] = thermal_characteristic + " kWh/(a m²)";
+        attr['Energy Consumption Contains Warm Water: '] = energy_consumption_contains_warm_water;
         return attr;
 }
 
