@@ -8,7 +8,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
         <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
-        <title>LoCaL's Energy Attriubute Inspector</title>
+        <title>#Berlin3D - Greenhouse Gas Emission Estimator</title>
         <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
         <link rel="stylesheet" href="Build/Cesium/Widgets/widgets.css" media="screen">
         <script  src="Build/Cesium/Cesium.js"></script>
@@ -65,7 +65,7 @@ document.ontouchmove = function(e) {e.preventDefault()};
 
 //var extent = Cesium.Rectangle.fromDegrees(13.0475307, 52.3910277, 13.0648685, 52.3998398);
 var extent = Cesium.Rectangle.fromDegrees(13.3190346, 52.5065701, 13.3363724, 52.515359);
-var globalJson = "http://localhost:8080/static/thermal/thermal.json";
+var globalJson = "http://localhost:8080/static/co2/co2.json";
 var defaultTransparency = 0.75;
 var wfsURL = "http://localhost:8080/citydb-wfs/wfs";
 
@@ -299,13 +299,19 @@ function getEnergyAttributes(xmlDoc, nsResolver) {
         var energy_source_enev_2014  = xmlDoc.evaluate('string(/bldg:Building/gen:stringAttribute[@name=\'energy_source_enev2014\']/gen:value)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
         var thermal_characteristic  = xmlDoc.evaluate('string(/bldg:Building/gen:doubleAttribute[@name=\'thermal_characteristic\']/gen:value)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
         var energy_consumption_contains_warm_water  = xmlDoc.evaluate('string(/bldg:Building/gen:stringAttribute[@name=\'energy_consumption_contains_warm_water\']/gen:value)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
+        var co2_emissions = xmlDoc.evaluate('string(/bldg:Building/gen:doubleAttribute[@name=\'co2_emissions\']/gen:value)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
+        var co2 = parseFloat(co2_emissions);
+        // CO2 emissions are in g CO2/(a m^2), thus tranform them to kg.
+        co2 = co2 / 1000;
+        co2 = Math.round(co2 * 100) / 100;
 
         var attr = new Object();
         attr['Energy Rating Type: '] = energy_rating_type;
         attr['Heating Type: '] = heating_type;
         attr['Heating Type Enev2014: '] = heating_type_enev_2014;
-        attr['Energy Source Enerv2014: '] = energy_source_enev_2014;
+        attr['Energy Source Enev2014: '] = energy_source_enev_2014;
         attr['Thermal Characteristic: '] = thermal_characteristic + " kWh/(a m²)";
+        attr['CO2 Emissions: '] = co2 + " kg CO2/(a m²)";
         attr['Energy Consumption Contains Warm Water: '] = energy_consumption_contains_warm_water;
         return attr;
 }
