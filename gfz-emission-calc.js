@@ -4,9 +4,9 @@ document.ontouchmove = function(e) {e.preventDefault()};
 //var extent = Cesium.Rectangle.fromDegrees(13.0475307, 52.3910277, 13.0648685, 52.3998398);
 var extent = Cesium.Rectangle.fromDegrees(13.3190346, 52.5065701, 13.3363724, 52.515359);
 //var globalJson = "http://localhost:8080/static/co2/co2.json";
-var globalJson = "http://139.17.99.185:8080/static/co2/co2.json";
+var globalJson = "http://localhost:8080/static/co2/co2.json";
 var defaultTransparency = 0.75;
-var wfsURL = "http://139.17.99.185:8080/citydb-wfs/wfs";
+var wfsURL = "http://localhost:8080/citydb-wfs/wfs";
 
 Cesium.Camera.DEFAULT_VIEW_FACTOR=0;
 Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
@@ -150,8 +150,8 @@ var showLoadError = function(name, error) {
 // add copyright information for berlin model
 viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('GFZ', 'http://www.gfz-potsdam.de/fileadmin/templates/images/svg/GFZ_Logo_SVG_klein_de.svg', 'http://www.gfz-potsdam.de'));
 viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('LoCaL', 'http://www.climate-kic.org/wp-content/themes/climatekic/img/printlogo.gif', 'http://www.climate-kic.org/programmes/low-carbon-city-lab'));
-viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('ImmobilienScout24', 'http://139.17.99.185:8080/static/immoscout.png', 'http://www.immobilienscout24.de/'));
-viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('Berlin Business Location Center', 'http://139.17.99.185:8080/static/berlin.png', 'http://www.businesslocationcenter.de/'));
+viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('ImmobilienScout24', 'http://localhost:8080/static/immoscout.png', 'http://www.immobilienscout24.de/'));
+viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('Berlin Business Location Center', 'http://localhost:8080/static/berlin.png', 'http://www.businesslocationcenter.de/'));
 
 function getParameterByName(name) {
 	name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
