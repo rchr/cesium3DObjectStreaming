@@ -3,28 +3,40 @@ document.ontouchmove = function(e) {e.preventDefault()};
 
 //var extent = Cesium.Rectangle.fromDegrees(13.0475307, 52.3910277, 13.0648685, 52.3998398);
 var extent = Cesium.Rectangle.fromDegrees(13.3190346, 52.5065701, 13.3363724, 52.515359);
-var globalJson = "http://localhost:8080/static/co2/co2.json";
+//var globalJson = "http://localhost:8080/static/co2/co2.json";
+var globalJson = "http://139.17.99.185:8080/static/co2/co2.json";
 var defaultTransparency = 0.75;
-var wfsURL = "http://localhost:8080/citydb-wfs/wfs";
+var wfsURL = "http://139.17.99.185:8080/citydb-wfs/wfs";
 
 Cesium.Camera.DEFAULT_VIEW_FACTOR=0;
 Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
 
-// The viewModel tracks the state of our mini application.
-var viewModel = {
-	energyRatingType: "",
-	heatingType: "",
-	energySource: "",
-	thermalCharacteristic: "",
-	co2Emissions: "",
-	warmWater: ""
+// The buildingEnergyViewModel tracks the state of our mini application.
+var buildingEnergyViewModel =  {
+	energyRatingType : "",
+	////heatingType: ["", "STOVE_HEATING", "SELF_CONTAINED_CENTRAL_HEATING", "CENTRAL_HEATING", "NO_INFORMATION", "COMBINED_HEAT_AND_POWER_PLANT", "ELECTRIC_HEATING", "DISTRICT_HEATING", "FLOOR_HEATING", "GAS_HEATING", "WOOD_PELLET_HEATING", "NIGHT_STORAGE_HEATER", "OIL_HEATING", "SOLAR_HEATING", "HEAT_PUMP"],
+	selectedHeatingType : "",
+	energySource : ["", "NO_INFORMATION", "GEOTHERMAL", "SOLAR_HEATING", "PELLET_HEATING", "GAS", "OIL", "DISTRICT_HEATING", "ELECTRICITY", "COAL", "ACID_GAS", "SOUR_GAS", "LIQUID_GAS", "STEAM_DISTRICT_HEATING", "WOOD", "WOOD_CHIPS", "COAL_COKE", "LOCAL_HEATING", "HEAT_SUPPLY", "LOCAL_HEATING", "BIO_ENERGY", "WIND_ENERGY", "HYDRO_ENERGY", "ENVIRONMENTAL_THERMAL_ENERGY", "COMBINED_HEAT_AND_POWER_FOSSIL_FUELS", "COMBINED_HEAT_AND_POWER_RENEWABLE_ENERGY", "COMBINED_HEAT_AND_POWER_REGENERATIVE_ENERGY", "COMBINED_HEAT_AND_POWER_BIO_ENERGY"],
+	selectedEnergySource : "",
+	thermalCharacteristic : "",
+	co2Emissions : "",
+	warmWater : "",
+	buildingID : "",
+	buildingStreetName : "",
+	buildingStreetNumber : "",
+	buildingCity : "",
+        buildingAddress : ""
+		       //buildingAddress : Cesium.knockout.computed(function() {
+		//return this.buildingStreetName() + " " + this.buildingStreetNumber() + ", " + this.buildingCity();
+	//}, this);
+
 };
 
-// Convert the viewModel members into knockout observables.
-Cesium.knockout.track(viewModel);
-// Bind the viewModel to the DOM elements of the UI that call for it.
+// Convert the buildingEnergyViewModel members into knockout observables.
+Cesium.knockout.track(buildingEnergyViewModel);
+// Bind the buildingEnergyViewModel to the DOM elements of the UI that call for it.
 var infoContainer = document.getElementById('infoContainer');
-Cesium.knockout.applyBindings(viewModel, infoContainer);
+Cesium.knockout.applyBindings(buildingEnergyViewModel, infoContainer);
 
 Cesium.DataSourceDisplay.defaultVisualizersCallback = function (scene, dataSource) {
 	var entities = dataSource.entities;
@@ -138,8 +150,8 @@ var showLoadError = function(name, error) {
 // add copyright information for berlin model
 viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('GFZ', 'http://www.gfz-potsdam.de/fileadmin/templates/images/svg/GFZ_Logo_SVG_klein_de.svg', 'http://www.gfz-potsdam.de'));
 viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('LoCaL', 'http://www.climate-kic.org/wp-content/themes/climatekic/img/printlogo.gif', 'http://www.climate-kic.org/programmes/low-carbon-city-lab'));
-viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('ImmobilienScout24', 'http://localhost:8080/static/immoscout.png', 'http://www.immobilienscout24.de/'));
-viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('Berlin Business Location Center', 'http://localhost:8080/static/berlin.png', 'http://www.businesslocationcenter.de/'));
+viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('ImmobilienScout24', 'http://139.17.99.185:8080/static/immoscout.png', 'http://www.immobilienscout24.de/'));
+viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('Berlin Business Location Center', 'http://139.17.99.185:8080/static/berlin.png', 'http://www.businesslocationcenter.de/'));
 
 function getParameterByName(name) {
 	name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
@@ -204,6 +216,7 @@ handler.setInputAction(
 				var responseXML = XHR.responseXML;
 				nsResolver = document.createNSResolver(responseXML.documentElement);
 				getEnergyAttributes(responseXML, nsResolver);
+				getBuildingInformation(responseXML, nsResolver);
 			});
 			XHR.addEventListener('error', function(event) {
 				alert('Oups! Something goes wrong.');
@@ -221,7 +234,7 @@ function buildWFSquery(id) {
 
 function logg() {
 	// TODO: Add upload functionality to server!
-	console.log(viewModel.energySource + ", " + viewModel.thermalCharacteristic + ", " + viewModel.co2Emissions);
+	console.log(buildingEnergyViewModel.energySource + ", " + buildingEnergyViewModel.thermalCharacteristic + ", " + buildingEnergyViewModel.co2Emissions);
 }
 
 /** Returns energy relevant attributes from given xmlDoc. */
@@ -238,12 +251,25 @@ function getEnergyAttributes(xmlDoc, nsResolver) {
 	co2 = co2 / 1000;
 	co2 = Math.round(co2 * 100) / 100;
 
-	viewModel.energySource = energy_source_enev_2014;
-	viewModel.energyRatingType = energy_rating_type;
-	viewModel.heatingType = heating_type_enev_2014;
-	viewModel.thermalCharacteristic = thermal_characteristic;
-	viewModel.co2Emissions = co2;
-	viewModel.warmWater = energy_consumption_contains_warm_water;
+	buildingEnergyViewModel.selectedEnergySource = energy_source_enev_2014;
+	buildingEnergyViewModel.energyRatingType = energy_rating_type;
+	buildingEnergyViewModel.selectedHeatingType = heating_type_enev_2014;
+	buildingEnergyViewModel.thermalCharacteristic = thermal_characteristic;
+	buildingEnergyViewModel.co2Emissions = co2;
+	buildingEnergyViewModel.warmWater = energy_consumption_contains_warm_water;
+}
+
+function getBuildingInformation(xmlDoc, nsResolver) {
+	var id  = xmlDoc.evaluate('string(/bldg:Building/@gml:id)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
+	var streetName = xmlDoc.evaluate('string(/bldg:Building/bldg:address/core:Address/core:xalAddress/xal:AddressDetails/xal:Country/xal:Locality/xal:Thoroughfare/xal:ThoroughfareName)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
+	var streetNumber = xmlDoc.evaluate('string(/bldg:Building/bldg:address/core:Address/core:xalAddress/xal:AddressDetails/xal:Country/xal:Locality/xal:Thoroughfare/xal:ThoroughfareNumber)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
+	var city = xmlDoc.evaluate('string(/bldg:Building/bldg:address/core:Address/core:xalAddress/xal:AddressDetails/xal:Country/xal:Locality/xal:LocalityName)', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
+	
+	buildingEnergyViewModel.buildingID = id;
+	buildingEnergyViewModel.buildingStreetName = streetName;
+	buildingEnergyViewModel.buildingStreetNumber = streetNumber;
+	buildingEnergyViewModel.buildingCity = city;
+	buildingEnergyViewModel.buildingAddress = streetName + " " + streetNumber + ", " + city;
 }
 
 
