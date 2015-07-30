@@ -15,7 +15,7 @@ var initializeSettings = function(json){
 	for (var key in json){
 	    var item = json[key].envelope;
 	    var url = baseUrl + json[key].link;
-	    item.push({id:key, url:url, tile:json[key].tile});	   
+	    item.push({id:key, url:url, tile:json[key].tile});
 	    rtree.insert(item);
 	}
 }
@@ -28,13 +28,15 @@ var loadTile = function(id, url){
 			for  (var key in json){
 				var jsonItem = json[key];
 				var item = jsonItem.envelope;
-				var url = baseUrl + baseName + "_Tile_" + jsonItem.tile[0] + "_" + jsonItem.tile[1] + "_collada/" + jsonItem.path + '/' + key + '.bgltf';
+				//var url = baseUrl + baseName + "_Tile_" + jsonItem.tile[0] + "_" + jsonItem.tile[1] + "_collada/" + jsonItem.path + '/' + key + '.bgltf';
+				//currenly there are no tiles:
+				var url = baseUrl + "/" + jsonItem.path + '/' + key + '.bgltf';
 				item.push({id:key, url:url, x:jsonItem.x,  y:jsonItem.y, z:jsonItem.z});
 				data[id].insert(item);
-			}	
+			}
 			tilesLoading[id] = false;
-			
-			if (typeof timer != "undefined")	        	
+
+			if (typeof timer != "undefined")
 		         clearTimeout(timer);
 		      timer = setTimeout(function() {
 		    	  updateTileStructure(data.tiles, maxLevel, maxModels);
@@ -74,11 +76,11 @@ var listenToRender = true;
 
 var tilesToLoad = {};
 var tilesLoading = {};
-var collectCurrentTiles = function(){		
+var collectCurrentTiles = function(){
 	tilesToLoad = {};
 	var count = 0;
 	for (var i = 0; i < tiles.length; i++){
-		var tile = tiles[i];		  
+		var tile = tiles[i];
 	    tile.bbox[0] = toDegrees(tile.bbox[0]);
 	    tile.bbox[1] = toDegrees(tile.bbox[1]);
 	    tile.bbox[2] = toDegrees(tile.bbox[2]);
@@ -89,16 +91,16 @@ var collectCurrentTiles = function(){
 			if(!data[dataTile.id]){
 				tilesToLoad[dataTile.id] = dataTile;
 				count++;
-			}						
+			}
 		}
 	}
-	if(count > 0){		
+	if(count > 0){
 		for(var key in tilesToLoad){
 			var tile = tilesToLoad[key];
 			loadTile(tile.id, tile.url);
-		}	
+		}
 	}else{
-		 if (typeof timer != "undefined")	        	
+		 if (typeof timer != "undefined")
 	         clearTimeout(timer);
 	      timer = setTimeout(function() {
 	    	  updateTileStructure(data.tiles, maxLevel, maxModels);
@@ -122,7 +124,7 @@ var updateTileStructure = function(){
 				if(data[dataTiles[j][4].id]){
 					var modelsSelection = data[dataTiles[j][4].id].search(tile.bbox);
 					models = models.concat(modelsSelection);
-				}				
+				}
 			}
             for(var j = 0; j < models.length; j++){
                 var model = models[j][4];
@@ -183,7 +185,7 @@ self.addEventListener('message', function(e) {
   		var url = data.url;
   		baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
   		baseName = url.substring(url.lastIndexOf("/"), url.lastIndexOf("."));
-  		loadSettings(url);  		
+  		loadSettings(url);
     case 'postRender':
     	addModel();
     	break;
@@ -195,4 +197,3 @@ self.addEventListener('message', function(e) {
         break;
   };
 }, false);
-

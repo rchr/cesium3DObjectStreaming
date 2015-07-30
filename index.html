@@ -12,6 +12,15 @@
 		<link rel="stylesheet" href="Build/Cesium/Widgets/widgets.css" media="screen" >
 		<link rel="stylesheet" href="emission-calc.css" >
 		<script src="Build/Cesium/Cesium.js"></script>
+		<script data-main="js/EmissionCalcViz" src="js/require.js"></script>
+		<script>
+  			require.config({
+   				baseUrl: "js/",
+    				paths: {
+        				jquery: 'jquery-2.1.4'
+    				}
+    			});
+		</script>
 	</head>
 	<body style="background: #000;">
 		<div id="cesiumContainer" class="globeWindow"></div>
@@ -23,63 +32,86 @@
 						<tr>
 							<td>ID:</td>
 							<td>
-								<span size="5">TODO Parse ID</span>
+								<span size="30" data-bind="text: buildingID" type="text" />
 							</td>
 						</tr>
 						<tr>
 							<td>Address:</td>
 							<td>
-								<span size="5">TODO Parse Address</span>
+								<span size="30" data-bind="text: buildingAddress()" teype="text" />
 							</td>
 						</tr>
 					</tbody>
 				</table>
 			</p>
 			<p>
-				<b>Energy Parameters:<b>
+				<b>Energy Parameters:</b>
 				<table>
 					<tbody>
 						<tr>
 							<td>Energy Rating Type</td>
 							<td>
-								<input size="30" data-bind="value: energyRatingType" type="text" />
+								<span size="30" data-bind="text: energyRatingType" type="text" />
 							</td>
 						</tr>
 						<tr>
 							<td>Energy Consumption <br>Contains Warm Water</td>
 							<td>
-								<input size="30" data-bind="value:warmWater" type="text" />
+								<span size="30" data-bind="text:warmWater" type="text" />
 							</td>
 						</tr>
 						<tr>
 							<td>Heating Type</td>
 							<td>
-								<input size="30" data-bind="value: heatingType" type="text" />
+								<span size="30" data-bind="text: heatingType"  type="text"/>
 							</td>
 						</tr>
 						<tr>
 							<td>Energy Source</td>
 							<td>
-								<input size="30" data-bind="value: energySource" type="text" />
+								<span data-bind="text: energySource" type="text" />
 							</td>
 						</tr>
 						<tr>
-							<td>Thermal Characteristic</td>
+							<td>Thermal Characteristic <br> [kWh/(a m²)]</td>
 							<td>
-								<input size="30" data-bind="value: thermalCharacteristic" type="text" />
+								<span size="10" data-bind="text: thermalCharacteristic" type="text" />
 							</td>
 						</tr>
 						<tr>
-							<td>CO2 Emissions</td>
+							<td>CO2 Emissions <br> [kg CO2/(a m²)]</td>
 							<td>
 								<span size="30" data-bind="text: co2Emissions" type="text" />
 							</td>
 						</tr>
 					</tbody>
 				</table>
-				<button onClick="logg()">Send Data!</button>
+			</p>
+			<p>
+				<b>Scenario:</b>
+				<table>
+					<tbody>
+						<tr>
+							<td>Energy Source</td>
+							<td>
+								<select data-bind="options: energySourceScenario, value: selectedEnergySourceScenario" />
+							</td>
+						</tr>
+						<tr>
+							<td>Thermal Characteristic <br> [kWh/(a m²)]</td>
+							<td>
+								<input size="10" data-bind="value: thermalCharacteristicScenario" type="text" ></input>
+							</td>
+						</tr>
+						<tr>
+							<td>CO2 Emissions <br> [kg CO2/(a m²)]</td>
+							<td>
+								<span size="30" data-bind="text: co2EmissionsScenario()" type="text" />
+							</td>
+						</tr>
+					</tbody>
+				</table>
 			</p>
 		</div>
-		<script src=gfz-emission-calc.js></script>
 	</body>
 </html>
