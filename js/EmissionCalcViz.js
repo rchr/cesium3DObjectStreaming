@@ -1,8 +1,8 @@
 /**
- * Module to stream and visualize 3D objects in Cesium. 
- * @module 
+ * Module to stream and visualize 3D objects in Cesium.
+ * @module
  */
-define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions"], function(WFS, parseXMLResponse, calculateCO2Emissions) {
+define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./colorRamp"], function(WFS, parseXMLResponse, calculateCO2Emissions, colorRamp) {
 	document.ontouchmove = function(e) {e.preventDefault();};
 
 	//var extent = Cesium.Rectangle.fromDegrees(13.0475307, 52.3910277, 13.0648685, 52.3998398);
@@ -10,6 +10,7 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions"], function(WFS,
 	var globalJson = "http://localhost:8080/static/co2/co2.json";
 	var defaultTransparency = 0.75;
 	var wfsURL = "http://localhost:8080/citydb-wfs/wfs";
+	var mat; // assigning mat outside scope
 
 	Cesium.Camera.DEFAULT_VIEW_FACTOR=0;
 	Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
@@ -32,15 +33,15 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions"], function(WFS,
 		"WOOD" : 281,
 		"WOOD_CHIPS" : -1,
 		"COAL_COKE" : -1,
-		"LOCAL_HEATING": -1, 
-		"HEAT_SUPPLY" : -1, 
-		"BIO_ENERGY" : -1, 
-		"WIND_ENERGY" : -1, 
-		"HYDRO_ENERGY" : -1, 
-		"ENVIRONMENTAL_THERMAL_ENERGY" : -1, 
-		"COMBINED_HEAT_AND_POWER_FOSSIL_FUELS" : -1, 
-		"COMBINED_HEAT_AND_POWER_RENEWABLE_ENERGY" : -1, 
-		"COMBINED_HEAT_AND_POWER_REGENERATIVE_ENERGY" : -1, 
+		"LOCAL_HEATING": -1,
+		"HEAT_SUPPLY" : -1,
+		"BIO_ENERGY" : -1,
+		"WIND_ENERGY" : -1,
+		"HYDRO_ENERGY" : -1,
+		"ENVIRONMENTAL_THERMAL_ENERGY" : -1,
+		"COMBINED_HEAT_AND_POWER_FOSSIL_FUELS" : -1,
+		"COMBINED_HEAT_AND_POWER_RENEWABLE_ENERGY" : -1,
+		"COMBINED_HEAT_AND_POWER_REGENERATIVE_ENERGY" : -1,
 		"COMBINED_HEAT_AND_POWER_BIO_ENERGY" : -1
 	};
 
@@ -68,10 +69,19 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions"], function(WFS,
 			if (this.selectedEnergySourceScenario === undefined) {
 				return "";
 			} else {
-				return calculateCO2Emissions(this.thermalCharacteristicScenario, this.energySrcScenario[this.selectedEnergySourceScenario]);
+				// TODO this needs the min max array! this is a dummy!
+				var params = '{
+					"min": 0,
+					"max": 100
+				}'
+				// calculate RGB array
+				var rgb = colorRamp(this.thermalCharacteristicScenario, params.min, param.max);
+				mat.setValue('diffuse', Cesium.Cartesian4(rgb[0], rgb[1], rgb[2], 0)); // cartesian4 (red, green, blue, alpha)
+				return calculateCO2Emissions(this.thermalCharacteristicScenario,
+					this.energySrcScenario[this.selectedEnergySourceScenario]);
 			}
 		},
-		district_heating_emission_factor: ""  
+		district_heating_emission_factor: ""
 	};
 
 	// Convert the energyVM members into knockout observables.
@@ -215,7 +225,9 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions"], function(WFS,
 	// Enable picking of buildings.
 	var wfs = new WFS(wfsURL);
 
+
 	var oldMat;
+	var lastColor;
 	var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
 	handler.setInputAction(
 		function (movement) {
@@ -223,13 +235,14 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions"], function(WFS,
 			if (Cesium.defined(object) && Cesium.defined(object.node)) {
 				if (oldMat != null) {
 					oldMat.setValue('transparency', defaultTransparency);
+					oldMat.setValue('diffuse', lastColor); // reset color if new picked
 				}
 				var materials = object.primitive.gltf.materials;
 				var matID = "";
 				for (var key in materials) {
 					matID = materials[key].name;
 				}
-				var mat = object.primitive.getMaterial(matID);
+				mat = object.primitive.getMaterial(matID);
 				mat.setValue('transparency', 1);
 				var cacheKey = object.primitive.cacheKey;
 				var splitted = cacheKey.split("/");
@@ -243,6 +256,8 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions"], function(WFS,
 					alert("fail");
 				});
 				oldMat = mat;
+				// get the original color for reuse
+				lastColor = mat.getValue('diffuse').clone();
 			}
 		},
 		Cesium.ScreenSpaceEventType.LEFT_CLICK
