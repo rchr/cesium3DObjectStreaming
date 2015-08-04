@@ -2,7 +2,8 @@
  * Module to stream and visualize 3D objects in Cesium.
  * @module
  */
-define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./colorRamp"], function(WFS, parseXMLResponse, calculateCO2Emissions, colorRamp) {
+define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMaxAttrib4Color", "./colorRamp", "jquery"], function(WFS, parseXMLResponse, calculateCO2Emissions, parseMaxAttrib4Color, colorRamp, $) {
+
 	document.ontouchmove = function(e) {e.preventDefault();};
 
 	//var extent = Cesium.Rectangle.fromDegrees(13.0475307, 52.3910277, 13.0648685, 52.3998398);
@@ -10,7 +11,10 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./colorRamp"]
 	var globalJson = "http://localhost:8080/static/co2/co2.json";
 	var defaultTransparency = 0.75;
 	var wfsURL = "http://localhost:8080/citydb-wfs/wfs";
-	var mat; // assigning mat outside scope
+	var attribBuildingID = "BLDG_GLOBAL_ATTRIBS"; // HACK: Use dummy building to get general attributes.
+	var mat; 
+	var maxAttrib4Color;
+	var wfs = new WFS(wfsURL);
 
 	Cesium.Camera.DEFAULT_VIEW_FACTOR=0;
 	Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
@@ -45,7 +49,6 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./colorRamp"]
 		"COMBINED_HEAT_AND_POWER_BIO_ENERGY" : -1
 	};
 
-
 	// The energyVM tracks the state of our mini application.
 	var energyVM = {
 		energyRatingType : "",
@@ -69,20 +72,25 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./colorRamp"]
 			if (this.selectedEnergySourceScenario === undefined) {
 				return "";
 			} else {
-				// TODO this needs the min max array! this is a dummy!
-				var params = '{
-					"min": 0,
-					"max": 100
-				}'
-				// calculate RGB array
-				var rgb = colorRamp(this.thermalCharacteristicScenario, params.min, param.max);
-				mat.setValue('diffuse', Cesium.Cartesian4(rgb[0], rgb[1], rgb[2], 0)); // cartesian4 (red, green, blue, alpha)
 				return calculateCO2Emissions(this.thermalCharacteristicScenario,
-					this.energySrcScenario[this.selectedEnergySourceScenario]);
+							     this.energySrcScenario[this.selectedEnergySourceScenario]);
 			}
+		},
+		changeColor : function() {
+			var co2 = parseFloat(this.co2EmissionsScenario());
+			if (maxAttrib4Color === undefined) {
+				alert("maxAttrib4Color not defined!");
+			}
+			var diffuseColor = calcDiffuseColor(co2, maxAttrib4Color);
+			mat.setValue('diffuse', diffuseColor);
 		},
 		district_heating_emission_factor: ""
 	};
+
+	function calcDiffuseColor(co2, max) {
+		var rgb = colorRamp(co2, max);
+		return new Cesium.Cartesian4(rgb[0], rgb[1], rgb[2], 1);
+	}
 
 	// Convert the energyVM members into knockout observables.
 	Cesium.knockout.track(energyVM);
@@ -157,26 +165,27 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./colorRamp"]
 			var z = data.data.z;
 			var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(
 				Cesium.Cartesian3.fromDegrees(x, y, 0.0));
-				dataSources[id] = scene.primitives.add(Cesium.Model.fromGltf({
-					url : url,
-					modelMatrix : modelMatrix,
-					scale : 1,
-					allowPicking:true
-				})
-								      );
-								      break;
-								      case 'remove':
-									      var ids =  data.ids;
-								      var counter = 0;
-								      for(var i = 0; i < ids.length; i++){
-									      var identifier = ids[i];
-									      if(dataSources.hasOwnProperty(identifier)){
-										      scene.primitives.remove(dataSources[identifier]);
-										      delete dataSources[identifier];
-										      counter++;
-									      }
-								      }
-								      break;
+				dataSources[id] = scene.primitives.add(
+					Cesium.Model.fromGltf({
+						url : url,
+						modelMatrix : modelMatrix,
+						scale : 1,
+						allowPicking:true
+					})
+				);
+				break;
+				case 'remove':
+					var ids =  data.ids;
+				var counter = 0;
+				for(var i = 0; i < ids.length; i++){
+					var identifier = ids[i];
+					if(dataSources.hasOwnProperty(identifier)){
+						scene.primitives.remove(dataSources[identifier]);
+						delete dataSources[identifier];
+						counter++;
+					}
+				}
+				break;
 		}
 	}, false);
 
@@ -222,17 +231,27 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./colorRamp"]
 		maxModels = 500;
 	}
 	console.log("Set MaxModels to " + maxModels);
-	// Enable picking of buildings.
-	var wfs = new WFS(wfsURL);
-
 
 	var oldMat;
 	var lastColor;
 	var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
 	handler.setInputAction(
 		function (movement) {
+
 			var object = scene.pick(movement.position);
 			if (Cesium.defined(object) && Cesium.defined(object.node)) {
+
+				// Get co2 attribute value considered as max value for color calculation.
+				if (maxAttrib4Color === undefined || maxAttrib4Color === '') {
+					var maxAttribQuery = wfs.createBuildingQuery(attribBuildingID);
+					var re = wfs.executeQuery(maxAttribQuery);
+					re.done(function(r) {
+						maxAttrib4Color = parseMaxAttrib4Color(r);
+					}).fail(function(){
+						alert("fail");
+					});
+				}
+
 				if (oldMat != null) {
 					oldMat.setValue('transparency', defaultTransparency);
 					oldMat.setValue('diffuse', lastColor); // reset color if new picked
@@ -262,5 +281,4 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./colorRamp"]
 		},
 		Cesium.ScreenSpaceEventType.LEFT_CLICK
 	);
-
 });
