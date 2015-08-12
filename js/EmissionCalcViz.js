@@ -2,18 +2,18 @@
  * Module to stream and visualize 3D objects in Cesium.
  * @module
  */
-define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMaxAttrib4Color", "./colorRamp", "jquery"], function(WFS, parseXMLResponse, calculateCO2Emissions, parseMaxAttrib4Color, colorRamp, $) {
+define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMinMaxAttrib4Color", "./colorRamp", "jquery"], function(WFS, parseXMLResponse, calculateCO2Emissions, parseMinMaxAttrib4Color, colorRamp, $) {
 
 	document.ontouchmove = function(e) {e.preventDefault();};
 
 	//var extent = Cesium.Rectangle.fromDegrees(13.0475307, 52.3910277, 13.0648685, 52.3998398);
 	var extent = Cesium.Rectangle.fromDegrees(13.3190346, 52.5065701, 13.3363724, 52.515359);
-	var globalJson = "http://localhost:8080/static/co2/co2.json";
+	var globalJson = "http://localhost:8080/static/ch-w/ch-w.json";
 	var defaultTransparency = 0.75;
 	var wfsURL = "http://localhost:8080/citydb-wfs/wfs";
 	var attribBuildingID = "BLDG_GLOBAL_ATTRIBS"; // HACK: Use dummy building to get general attributes.
 	var mat; 
-	var maxAttrib4Color;
+	var minAttrib4Color, maxAttrib4Color;
 	var wfs = new WFS(wfsURL);
 
 	Cesium.Camera.DEFAULT_VIEW_FACTOR=0;
@@ -81,14 +81,14 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMaxAtt
 			if (maxAttrib4Color === undefined) {
 				alert("maxAttrib4Color not defined!");
 			}
-			var diffuseColor = calcDiffuseColor(co2, maxAttrib4Color);
+			var diffuseColor = calcDiffuseColor(co2, minAttrib4Color, maxAttrib4Color);
 			mat.setValue('diffuse', diffuseColor);
 		},
 		district_heating_emission_factor: ""
 	};
 
-	function calcDiffuseColor(co2, max) {
-		var rgb = colorRamp(co2, max);
+	function calcDiffuseColor(co2, min, max) {
+		var rgb = colorRamp(co2, min, max);
 		return new Cesium.Cartesian4(rgb[0], rgb[1], rgb[2], 1);
 	}
 
@@ -246,7 +246,9 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMaxAtt
 					var maxAttribQuery = wfs.createBuildingQuery(attribBuildingID);
 					var re = wfs.executeQuery(maxAttribQuery);
 					re.done(function(r) {
-						maxAttrib4Color = parseMaxAttrib4Color(r);
+						minMax = parseMinMaxAttrib4Color(r);
+						minAttrib4Color = minMax[0];
+						maxAttrib4Color = minMax[1]; 
 					}).fail(function(){
 						alert("fail");
 					});

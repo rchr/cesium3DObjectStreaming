@@ -7,7 +7,7 @@ define(function() {
 	 * @param responseXML
 	 * @return {undefined}
 	 */
-	function parseMaxAttrib4Color(responseXML) {
+	function parseMinMaxAttrib4Color(responseXML) {
 		if (responseXML === undefined || responseXML == '') {
 			return null;
 		}
@@ -15,8 +15,15 @@ define(function() {
 		var maxAttrib  = responseXML.evaluate('string(/bldg:Building/gen:doubleAttribute[@name=\'MAX_ATTRIB_VAL_4_COLOR\']/gen:value)', responseXML, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
 		var value = parseFloat(maxAttrib);
 		value = value / 1000;
-		return Math.round(value * 100)/100;
+		var max = Math.round(value * 100)/100;
+
+		var minAttrib  = responseXML.evaluate('string(/bldg:Building/gen:doubleAttribute[@name=\'MIN_ATTRIB_VAL_4_COLOR\']/gen:value)', responseXML, nsResolver, XPathResult.ANY_TYPE, null).stringValue;
+		var minValue = parseFloat(minAttrib);
+		minValue = minValue / 1000;
+		var min = Math.round(minValue * 100)/100;
+		return [min, max];
+
 	}
 
-	return parseMaxAttrib4Color;
+	return parseMinMaxAttrib4Color;
 });
