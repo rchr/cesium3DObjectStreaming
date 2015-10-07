@@ -1,4 +1,4 @@
-define(function() {
+define(['one-color'], function(onecolor) {
     function colorRamp(value, min, max) {
 	if (value < min) {
 		value = min;
@@ -12,5 +12,24 @@ define(function() {
         return rgb;
     }
 
+
+/*    function colorRamp(value, min, max) {
+    	if (value < min) {
+		value = min;
+	} else if (value > max) {
+		value = max;
+	}
+
+	var h = '0';
+	var v = '100';
+	var s = (value - min) / (max - min) * 100;
+	var colorString = h + ', ' + s + '%, ' + v + '%';
+	var color = onecolor('hsv(' + colorString + ')');
+	var rgb = [color.red(), color.green(), color.blue()];
+	return rgb;
+	
+    
+    }
+*/
     return colorRamp;
 });

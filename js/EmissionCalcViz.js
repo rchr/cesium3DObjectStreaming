@@ -7,8 +7,10 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMinMax
 	document.ontouchmove = function(e) {e.preventDefault();};
 
 	//var extent = Cesium.Rectangle.fromDegrees(13.0475307, 52.3910277, 13.0648685, 52.3998398);
-	var extent = Cesium.Rectangle.fromDegrees(13.3190346, 52.5065701, 13.3363724, 52.515359);
-	var globalJson = "http://localhost:8080/static/ch-w/ch-w.json";
+	var extent = Cesium.Rectangle.fromDegrees(13.3209229, 52.50657921, 13.3252466, 52.5089961);
+	// var globalJson = "http://localhost:8080/static/ch-w/ch-w.json";
+	//var globalJson = "http://localhost:8000/collada_export/export.json";
+	var globalJson = "http://localhost:8000/collada_export/export.json";
 	var defaultTransparency = 0.75;
 	var wfsURL = "http://localhost:8080/citydb-wfs/wfs";
 	var attribBuildingID = "BLDG_GLOBAL_ATTRIBS"; // HACK: Use dummy building to get general attributes.
@@ -41,12 +43,13 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMinMax
 		"HEAT_SUPPLY" : -1,
 		"BIO_ENERGY" : -1,
 		"WIND_ENERGY" : -1,
-		"HYDRO_ENERGY" : -1,
-		"ENVIRONMENTAL_THERMAL_ENERGY" : -1,
-		"COMBINED_HEAT_AND_POWER_FOSSIL_FUELS" : -1,
-		"COMBINED_HEAT_AND_POWER_RENEWABLE_ENERGY" : -1,
-		"COMBINED_HEAT_AND_POWER_REGENERATIVE_ENERGY" : -1,
-		"COMBINED_HEAT_AND_POWER_BIO_ENERGY" : -1
+		"HYDRO_ENERGY" : -1
+		//,
+		//"ENVIRONMENTAL_THERMAL_ENERGY" : -1,
+		//"COMBINED_HEAT_AND_POWER_FOSSIL_FUELS" : -1,
+		//"COMBINED_HEAT_AND_POWER_RENEWABLE_ENERGY" : -1,
+		//"COMBINED_HEAT_AND_POWER_REGENERATIVE_ENERGY" : -1,
+		//"COMBINED_HEAT_AND_POWER_BIO_ENERGY" : -1
 	};
 
 	// The energyVM tracks the state of our mini application.
@@ -113,7 +116,7 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMinMax
 			}),
 			"timeline":false,
 			"animation":false,
-			"baseLayerPicker":false,
+			"baseLayerPicker": false,
 			"geocoder":false,
 			"infoBox":true,
 			"sceneModePicker":false,
@@ -208,10 +211,10 @@ define(["./WFS", "./parseXMLResponse", "./calculateCO2Emissions", "./parseMinMax
 	};
 
 	// add copyright information for berlin model
-	viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('GFZ', 'http://www.gfz-potsdam.de/fileadmin/templates/images/svg/GFZ_Logo_SVG_klein_de.svg', 'http://www.gfz-potsdam.de'));
-	viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('LoCaL', 'http://www.climate-kic.org/wp-content/themes/climatekic/img/printlogo.gif', 'http://www.climate-kic.org/programmes/low-carbon-city-lab'));
-	viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('ImmobilienScout24', 'http://localhost:8080/static/immoscout.png', 'http://www.immobilienscout24.de/'));
-	viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('Berlin Business Location Center', 'http://localhost:8080/static/berlin.png', 'http://www.businesslocationcenter.de/'));
+	viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('GFZ', 'http://localhost:8000/cesium3DObjectStreaming/images/GFZ_Logo_SVG_klein_de.svg', 'http://www.gfz-potsdam.de'));
+	viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('LoCaL', 'http://localhost:8000/cesium3DObjectStreaming/images/climate_kic.png', 'http://www.climate-kic.org/programmes/low-carbon-city-lab'));
+	viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('ImmobilienScout24', 'http://localhost:8000/cesium3DObjectStreaming/images/immoscout.png', 'http://www.immobilienscout24.de/'));
+	viewer.scene.frameState.creditDisplay.addDefaultCredit(new Cesium.Credit('Berlin Business Location Center', 'http://localhost:8000/cesium3DObjectStreaming/images/berlin.png', 'http://www.businesslocationcenter.de/'));
 
 	function getParameterByName(name) {
 		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
